@@ -11,3 +11,7 @@ Let's explain that description word for word from left to right:
 - Denowiki can load modules (meta-sites) that serve any number of wiki pages, often algorithmetically produced.
 - This meta-site runs a scraper and offers pages for starting or stopping the site and page loops.
 - The start/stop/step controls are provided by a plugin with configurable client and server parts.
+
+Related documentation.
+- [Stepping the Async Scrape](http://ward.asia.wiki.org/stepping-the-async-scrape.html)
+- [Federation Friendly Outposts](http://ward.asia.wiki.org/federation-friendly-outposts.html)
