@@ -45,7 +45,6 @@ Mock Computation
 
   Here we start, stop and step a triple nested loop that counts iterations
   until five of each, for 5 * 5 * 5 total iterations have completed.
-  See also [[Triple Controls]] of the same loop
 
   process-step:
     legend: "Simple Nested Loop",
