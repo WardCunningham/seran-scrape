@@ -4,11 +4,12 @@
 import { delay } from "std/util/async.ts";
 import { ProcessStep } from "./step.ts";
 import { exists } from "std/fs/mod.ts"
+import * as wiki from "seran/wiki.ts"
 
 export let plugins = [ "/client/process-step.mjs" ]
 export let metaPages = {};
 
-export async function init(opts) { opts.site.pages(`
+export async function init(opts) { wiki.pages(`
 
 Welcome Visitors
 

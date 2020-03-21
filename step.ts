@@ -1,5 +1,7 @@
 // Server-side start/stop/step support for process-step plugin
 
+import * as wiki from "seran/wiki.ts"
+
 export class ProcessStep {
   name: string
   status: string
@@ -30,8 +32,8 @@ export class ProcessStep {
   }
 
 
-  async button(req, site, _system) {
-    let headers = site.baseHeaders();
+  async button(req, _system) {
+    let headers = wiki.baseHeaders();
 
     async function sleep(ms) {
       return new Promise(resolve => {
@@ -75,7 +77,7 @@ export class ProcessStep {
       }
     }
 
-    site.serveJson(req, {
+    wiki.serveJson(req, {
       running: this.running,
       waiting: !!this.waiting,
       status: this.status
@@ -88,10 +90,10 @@ export class ProcessStep {
       metaPages[url] = fn;
     }
 
-    route(`/${this.name}?action=start`, (a,b,c) => this.button(a,b,c));
-    route(`/${this.name}?action=stop`, (a,b,c) => this.button(a,b,c));
-    route(`/${this.name}?action=step`, (a,b,c) => this.button(a,b,c));
-    route(`/${this.name}?action=state`, (a,b,c) => this.button(a,b,c));
+    route(`/${this.name}?action=start`, (a,b) => this.button(a,b));
+    route(`/${this.name}?action=stop`, (a,b) => this.button(a,b));
+    route(`/${this.name}?action=step`, (a,b) => this.button(a,b));
+    route(`/${this.name}?action=state`, (a,b) => this.button(a,b));
 
     return this
   }
