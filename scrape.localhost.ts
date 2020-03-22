@@ -120,7 +120,7 @@ preload('sites.asia.wiki.org')
 
 async function preload(root:site) {
   if (await exists('data')) {
-    let files = await Deno.readDir('data')
+    let files = await Deno.readdir('data')
     scrape(files.map(i=>i.name))
   } else {
     Deno.mkdir('data')
