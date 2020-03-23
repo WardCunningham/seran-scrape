@@ -6,7 +6,9 @@ jobs:
     steps:
     - uses: actions/checkout@v1
     - name: Build Docker Image
+    # https://github.community/t5/GitHub-Actions/docker-pull-from-public-GitHub-Package-Registry-fail-with-quot/td-p/32782
       run: |
+        echo ${{ secrets.GITHUB_TOKEN }} |  docker login docker.pkg.github.com -u WardCunningham --password-stdin
         docker build . --file Dockerfile --tag ${GITHUB_SHA:0:8}
     - name: Push Build Image
       run: |
