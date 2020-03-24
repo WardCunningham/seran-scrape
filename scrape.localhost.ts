@@ -116,14 +116,14 @@ let done: site[] = [];
 let nextsite = new ProcessStep('nextsite', false, siteloop).control(metaPages)
 let nextslug = new ProcessStep('nextslug', false, slugloop).control(metaPages)
 
+if (!await exists('data')) Deno.mkdir('data')
 preload('sites.asia.wiki.org')
 
 async function preload(root:site) {
-  if (await exists('data')) {
-    let files = await Deno.readdir('data')
+  let files = await Deno.readdir('data')
+  if (files.length > 0) {
     scrape(files.map(i=>i.name))
   } else {
-    Deno.mkdir('data')
     scrape([root])
   }
 }
