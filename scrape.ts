@@ -48,7 +48,7 @@ Mock Computation
   until five of each, for 5 * 5 * 5 total iterations have completed.
 
   process-step:
-    legend: "Simple Nested Loop",
+    text: "Simple Nested Loop",
     href: "/simple"
 
 Start or Stop the Scrape
@@ -60,13 +60,13 @@ Start or Stop the Scrape
   We fetch sitemaps for one site and then discover more.
 
   process-step:
-    legend: "Process Next Site",
+    text: "Process Next Site",
     href: "/nextsite"
 
   We fetch page json to index and inspect for more sites.
 
   process-step:
-    legend: "Process Next Page",
+    text: "Process Next Page",
     href: "/nextslug"
 `
 )}
