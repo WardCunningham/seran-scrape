@@ -258,5 +258,5 @@ route("/queue-stats.json", async (req, _system) => {
   items.push(wiki.paragraph(`This is work yet to be done.`))
   items.push(wiki.paragraph(`${siteq.length} sites queued`))
   items.push(wiki.paragraph(`${slugq.length} pages queued`))
-  wiki.serveJson(req, wiki.page("File Size", items));
+  wiki.serveJson(req, wiki.page("Queue Stats", items));
 });
