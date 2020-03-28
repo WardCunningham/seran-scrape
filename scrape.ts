@@ -69,7 +69,7 @@ Start or Stop the Scrape
     text: "Process Next Page",
     href: "/nextslug"
 
-  See [[Queue Stats]]
+  See [[Queue Stats]], [[Failed Sites]]
 `
 )}
 
@@ -114,14 +114,22 @@ let slugq: todo[] = [];
 
 let doing: site[] = [];
 let done: site[] = [];
+let fail: site[] = []
+
+let skip: todo[] = []
+
+const more = () => (siteq.length + slugq.length + doing.length) > 0
 
 let nextsite = new ProcessStep('nextsite', false, siteloop).control(metaPages)
 let nextslug = new ProcessStep('nextslug', false, slugloop).control(metaPages)
 
 if (!await exists('data')) Deno.mkdir('data')
-preload('sites.asia.wiki.org')
 
 async function preload(root:site) {
+  done = []
+  fail = []
+  skip = []
+
   let files = await Deno.readdir('data')
   if (files.length > 0) {
     scrape(files.map(i=>i.name))
@@ -143,22 +151,24 @@ function scrape(sites: site[]) {
   for (let maybe of sites) {
     if (!doing.includes(maybe) && !done.includes(maybe)) {
       siteq.push({ site: maybe });
-      doing.push(maybe);
     }
   }
 }
 
 async function siteloop() {
-  console.log('start site loop')
+  let t0 = Date.now()
   let count = 0
-  while (true) {
+  await preload('sites.asia.wiki.org')
+  while (more()) {
     if (siteq.length) {
       let job = siteq.shift();
+      doing.push(job.site)
       await nextsite.step(`#${count++} ${job.site}`)
       await dosite(job.site);
     }
-    await sleep(1000)
+    await sleep(500)
   }
+  return (Date.now()-t0)/1000
 }
 
 async function dosite(site: site) {
@@ -174,6 +184,7 @@ async function dosite(site: site) {
       await update(info.slug, info.date);
     }
   } catch (e) {
+    fail.push(site)
     console.log("site trouble", site, e);
   }
   done.push(site);
@@ -188,15 +199,18 @@ async function dosite(site: site) {
       doit = true
     } else {
       let stat = await Deno.stat(file);
-      if (date > stat.modified * 1000) {
+      let epoch = Math.floor(date/1000)
+      console.log('update?', site, slug, epoch, stat.modified, epoch-stat.modified)
+      if (epoch > stat.modified) {
         doit = true
       }
     } 
     if (doit) {
       slugq.push({ site, slug, date })
-      await sleep(1000)
+      await sleep(500)
     }
      else {
+      skip.push({site,slug})
       console.log('skipping',site,slug,new Date(date))
     }
 
@@ -206,15 +220,17 @@ async function dosite(site: site) {
 // E A C H   S L U G
 
 async function slugloop() {
+  let t0 = Date.now()
   let count = 0
-  while (true) {
+  while (more()) {
     if (slugq.length) {
       let job = slugq.shift();
       await nextslug.step(`#${count++} ${job.slug}`)
       await doslug(job.site, job.slug, job.date);
     }
-    await sleep(100)
+    await sleep(500)
   }
+  return (Date.now()-t0)/1000
 }
 
 async function doslug(site: site, slug: slug, date: number) {
@@ -249,14 +265,33 @@ async function doslug(site: site, slug: slug, date: number) {
 }
 
 
-function route(url, fn) {
-  metaPages[url] = fn;
+// L I V E   R E P O R T S
+
+function page (title, story) {
+  const route = (url, fn) => {metaPages[url] = fn}
+  const asSlug = title => title.replace(/\s/g, "-").replace(/[^A-Za-z0-9-]/g, "").toLowerCase()
+  const asItems = metatext => metatext.split(/\n+/).map((text) => wiki.paragraph(text))
+  route(`/${asSlug(title)}.json`, async (req, _system) => {
+    wiki.serveJson(req, wiki.page(title, asItems(story())))
+  })
 }
 
-route("/queue-stats.json", async (req, _system) => {
-  let items = []
-  items.push(wiki.paragraph(`This is work yet to be done.`))
-  items.push(wiki.paragraph(`${siteq.length} sites queued`))
-  items.push(wiki.paragraph(`${slugq.length} pages queued`))
-  wiki.serveJson(req, wiki.page("Queue Stats", items));
-});
+page('Queue Stats', () =>
+`This is work yet to be done.
+
+${siteq.length} sites queued
+${doing.length} sites in flight
+${slugq.length} pages queued
+
+This work has been completed.
+
+${done.length} sites done
+${fail.length} sites failed
+${skip.length} pages skipped
+`)
+
+page('Failed Sites', () =>
+`Sites that fail to return a valid sitemap.json
+
+${fail.join(", ")}
+`)
