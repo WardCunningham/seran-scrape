@@ -1,5 +1,5 @@
 // denowiki meta-site federation web scraper
-// usage: ./denowiki.sh --meta-site=../denowiki-scrape/scrape.localhost.ts@scrape.localtest.me
+// usage: sh seran-wiki.sh --allow-disclosure ../seran-scrape/scrape.ts
 
 import { delay } from "std/util/async.ts";
 import { ProcessStep } from "./step.ts";
@@ -86,7 +86,6 @@ function counters (where) {
 let simple = new ProcessStep('simple', false, run1).control(metaPages)
 
 async function run1() {
-  let t0 = Date.now()
   for (c0 = 1; c0 < l0; c0++) {
     await simple.step(counters('outer'))
     await delay(100);
@@ -99,7 +98,6 @@ async function run1() {
       }
     }
   }
-  return (Date.now()-t0)/1000
 }
 
 
@@ -109,6 +107,9 @@ type site = string;
 type slug = string;
 type todo = { site: site; slug?: slug; date?: number };
 
+// https://github.com/WardCunningham/Smallest-Federated-Wiki/commit/40f056ae
+const birth = Date.parse('Jun 25, 2011, 3:34 PM PDT')
+
 let siteq: todo[] = [];
 let slugq: todo[] = [];
 
@@ -116,7 +117,7 @@ let doing: site[] = [];
 let done: site[] = [];
 let fail: site[] = []
 
-let skip: todo[] = []
+let skip = 0
 
 const more = () => (siteq.length + slugq.length + doing.length) > 0
 
@@ -128,7 +129,7 @@ if (!await exists('data')) Deno.mkdir('data')
 async function preload(root:site) {
   done = []
   fail = []
-  skip = []
+  skip = 0
 
   let files = await Deno.readdir('data')
   if (files.length > 0) {
@@ -156,7 +157,6 @@ function scrape(sites: site[]) {
 }
 
 async function siteloop() {
-  let t0 = Date.now()
   let count = 0
   await preload('sites.asia.wiki.org')
   while (more()) {
@@ -168,7 +168,6 @@ async function siteloop() {
     }
     await sleep(500)
   }
-  return (Date.now()-t0)/1000
 }
 
 async function dosite(site: site) {
@@ -181,7 +180,7 @@ async function dosite(site: site) {
       await Deno.mkdir(dir); // new site
     }
     for (let info of sitemap) {
-      await update(info.slug, info.date);
+      await update(info.slug, info.date||birth);
     }
   } catch (e) {
     fail.push(site)
@@ -194,13 +193,11 @@ async function dosite(site: site) {
     let file = `${dir}/${slug}.json`
     let doit = false
 
-    console.log('update',dir, slug, file)
     if (!(await exists(file))) {
       doit = true
     } else {
       let stat = await Deno.stat(file);
       let epoch = Math.floor(date/1000)
-      console.log('update?', site, slug, epoch, stat.modified, epoch-stat.modified)
       if (epoch > stat.modified) {
         doit = true
       }
@@ -210,8 +207,7 @@ async function dosite(site: site) {
       await sleep(500)
     }
      else {
-      skip.push({site,slug})
-      console.log('skipping',site,slug,new Date(date))
+      skip++
     }
 
   }
@@ -220,7 +216,6 @@ async function dosite(site: site) {
 // E A C H   S L U G
 
 async function slugloop() {
-  let t0 = Date.now()
   let count = 0
   while (more()) {
     if (slugq.length) {
@@ -230,7 +225,6 @@ async function slugloop() {
     }
     await sleep(500)
   }
-  return (Date.now()-t0)/1000
 }
 
 async function doslug(site: site, slug: slug, date: number) {
@@ -287,7 +281,7 @@ This work has been completed.
 
 ${done.length} sites done
 ${fail.length} sites failed
-${skip.length} pages skipped
+${skip} pages skipped
 `)
 
 page('Failed Sites', () =>

@@ -45,22 +45,23 @@ export class ProcessStep {
       console.log('start')
       if (!this.running && !this.waiting) {
         this.running = true
+        let t0 = Date.now()
         console.log('run',this.run)
-        this.run().then((dt) => {
-          console.log('done', dt)
+        this.run().then(() => {
+          console.log('done',this.run)
           this.running=false;
-          this.status=`complete in ${dt} seconds`
+          this.status=`complete in ${(Date.now()-t0)/1000} seconds`
         });
       } else if (this.waiting) {
         this.waiting = null;
         this.running = true
-        console.log('resume')
+        console.log('resume',this.run)
         this.resume()
       }
     }
 
     if (req.url.indexOf("step") != -1) {
-      console.log('step')
+      console.log('step',this.run)
       if (this.running) {
         this.running = false;
       } else if (this.waiting) {
@@ -71,7 +72,7 @@ export class ProcessStep {
     }
 
     if (req.url.indexOf("stop") != -1) {
-      console.log('stop')
+      console.log('stop',this.run)
       if (this.running) {
         this.running = false;
       }
