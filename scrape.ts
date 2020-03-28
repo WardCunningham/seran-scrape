@@ -68,6 +68,8 @@ Start or Stop the Scrape
   process-step:
     text: "Process Next Page",
     href: "/nextslug"
+
+  See [[Queue Stats]]
 `
 )}
 
@@ -245,3 +247,16 @@ async function doslug(site: site, slug: slug, date: number) {
     await Deno.utime(path, epoch(Date.now()), epoch(date))
   }
 }
+
+
+function route(url, fn) {
+  metaPages[url] = fn;
+}
+
+route("/queue-stats.json", async (req, _system) => {
+  let items = []
+  items.push(wiki.paragraph(`This is work yet to be done.`))
+  items.push(wiki.paragraph(`${siteq.length} sites queued`))
+  items.push(wiki.paragraph(`${slugq.length} pages queued`))
+  wiki.serveJson(req, wiki.page("File Size", items));
+});
