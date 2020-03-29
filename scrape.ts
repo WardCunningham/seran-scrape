@@ -13,10 +13,8 @@ export async function init(opts) { wiki.pages(`
 
 Welcome Visitors
 
-  Welcome to this [[DenoWiki]] Federated Wiki site.
+  Welcome to this [[Seran Wiki]] Federation outpost.
   From this page you can find who we are and what we do.
-  New sites provide this information and then claim the site as their own.
-  You will need your own site to participate.
 
   Pages about us.
 
@@ -30,7 +28,7 @@ Welcome Visitors
 Federation Scraper
 
   Here we supervise the ongoing scrape of the wiki federation.
-  We invision this as cooperating loops where sitemap fetches lead
+  We implement this as cooperating loops where sitemap fetches lead
   to page fetches and these lead to more sitemap fetches.
 
   See [[Stepping the Async Scrape]]
@@ -273,7 +271,9 @@ function page (title, story) {
 }
 
 page('Queue Stats', () =>
-`This is work yet to be done.
+`Live counts updated continuously while scrapping.
+
+This is work yet to be done.
 
 ${siteq.length} sites queued
 ${doing.length} sites in flight
@@ -287,7 +287,7 @@ ${skip} pages skipped
 `)
 
 page('Failed Sites', () =>
-`Sites that fail to return a valid sitemap.json
+`Sites that have failed to return a valid sitemap.json.
 
 ${fail.join(", ")}
 `)
