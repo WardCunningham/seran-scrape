@@ -183,8 +183,10 @@ async function dosite(site: site) {
       await update(info.slug, info.date||birth);
     }
   } catch (e) {
-    fail.push(site)
-    console.log("site trouble", site, e);
+    if (!fail.includes(site)) { // shouldn't happen, but does
+      fail.push(site)
+      console.log("site trouble", site, e)
+    }
   }
   done.push(site);
   doing.splice(doing.indexOf(site), 1);
