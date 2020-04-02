@@ -1,4 +1,5 @@
 name: Build & Push Docker Image
+# usage: git commit --allow-empty -m "trigger GitHub actions" && git push
 on: [push]
 jobs:
   build:
