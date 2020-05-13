@@ -5,71 +5,58 @@ import { delay } from "std/util/async.ts";
 import { ProcessStep } from "./step.ts";
 import { exists } from "std/fs/mod.ts"
 import * as wiki from "seran/wiki.ts"
+import * as region from "./region.ts"
 
 export let plugins = [ "/client/process-step.mjs" ]
+export let handler = region.handler
 export let metaPages = {};
 
-export async function init(opts) { wiki.pages(`
+handler.items("Welcome Visitors", [
+  "Welcome to this [[Seran Wiki]] Federation outpost.\
+  From this page you can find who we are and what we do.",
 
-Welcome Visitors
+  "Pages about us.",
+  "[[Ward Cunningham]]",
 
-  Welcome to this [[Seran Wiki]] Federation outpost.
-  From this page you can find who we are and what we do.
+  "Pages where we do and share.",
+  "[[Federation Scraper]]",
+  "[[Region Rosters]]"
+])
 
-  Pages about us.
+handler.items("Federation Scraper", [
 
-  [[Ward Cunningham]]
+  "Here we supervise the ongoing scrape of the wiki federation.\
+  We implement this as cooperating loops where sitemap fetches lead\
+  to page fetches and these lead to more sitemap fetches.",
+  "See [[Stepping the Async Scrape]]",
 
-  Pages where we do and share.
+  "While developing this technology we focus first on a nested loop.\
+  We have several versions of this where we explore different instrumentation strategies.",
+  "[[Mock Computation]]",
+  "[[Start or Stop the Scrape]]"
+])
 
-  [[Federation Scraper]]
+handler.items("Mock Computation", [
+  "Here we start, stop and step a triple nested loop that counts iterations\
+  until five of each, for 5 * 5 * 5 total iterations have completed.",
+  wiki.item("process-step", { text: "Simple Nested Loop.", href: "/simple" })
+])
 
+handler.items("Start or Stop the Scrape", [
+  "An inital scrape can take the better part of a day.\
+  Press 'start' to begin.\
+  Shift-'start' to do one site or slug at a time.",
 
-Federation Scraper
+  "We fetch sitemaps for one site and then discover more.",
+  wiki.item("process-step", { text: "Process Next Site.", href: "/nextsite" }),
 
-  Here we supervise the ongoing scrape of the wiki federation.
-  We implement this as cooperating loops where sitemap fetches lead
-  to page fetches and these lead to more sitemap fetches.
+  "We fetch page json to index and inspect for more sites.",
+  wiki.item("process-step", { text: "Process Next Page.", href: "/nextslug" }),
 
-  See [[Stepping the Async Scrape]]
+  "See [[Queue Stats]], [[Failed Sites]]"
 
-  While developing this technology we focus first on a nested loop.
-  We have several versions of this where we explore different instrumentation strategies.
+])
 
-  [[Mock Computation]]
-
-  [[Start or Stop the Scrape]]
-
-Mock Computation
-
-  Here we start, stop and step a triple nested loop that counts iterations
-  until five of each, for 5 * 5 * 5 total iterations have completed.
-
-  process-step:
-    text: "Simple Nested Loop",
-    href: "/simple"
-
-Start or Stop the Scrape
-
-  An inital scrape can take the better part of a day.
-  Press 'start' to begin.
-  Shift-'start' to do one site or slug at a time.
-
-  We fetch sitemaps for one site and then discover more.
-
-  process-step:
-    text: "Process Next Site",
-    href: "/nextsite"
-
-  We fetch page json to index and inspect for more sites.
-
-  process-step:
-    text: "Process Next Page",
-    href: "/nextslug"
-
-  See [[Queue Stats]], [[Failed Sites]]
-`
-)}
 
 
 // S I M P L E   M O C K   C O M P U T A T I O N
@@ -261,33 +248,24 @@ async function doslug(site: site, slug: slug, date: number) {
 
 // L I V E   R E P O R T S
 
-function page (title, story) {
-  const route = (url, fn) => {metaPages[url] = fn}
-  const asSlug = title => title.replace(/\s/g, "-").replace(/[^A-Za-z0-9-]/g, "").toLowerCase()
-  const asItems = metatext => metatext.split(/\n+/).map((text) => wiki.paragraph(text))
-  route(`/${asSlug(title)}.json`, async (req, _system) => {
-    wiki.serveJson(req, wiki.page(title, asItems(story())))
-  })
-}
+handler.items("Queue Stats", () => [
+  "Live counts updated continuously while scrapping.",
 
-page('Queue Stats', () =>
-`Live counts updated continuously while scrapping.
+  "This is work yet to be done.",
+  `${siteq.length} sites queued`,
+  `${doing.length} sites in flight`,
+  `${slugq.length} pages queued`,
 
-This is work yet to be done.
+  "This work has been completed.",
+  `${done.length} sites done`,
+  `${fail.length} sites failed`,
+  `${skip} pages skipped`
+])
 
-${siteq.length} sites queued
-${doing.length} sites in flight
-${slugq.length} pages queued
+handler.items("Failed Sites", () => [
+  "Sites that have failed to return a valid sitemap.json.",
+  fail.join(", ")
+])
 
-This work has been completed.
 
-${done.length} sites done
-${fail.length} sites failed
-${skip} pages skipped
-`)
-
-page('Failed Sites', () =>
-`Sites that have failed to return a valid sitemap.json.
-
-${fail.join(", ")}
-`)
+// R E G I O N.   R O S T E R S
