@@ -53,7 +53,7 @@ handler.items("Start or Stop the Scrape", [
   "We fetch page json to index and inspect for more sites.",
   wiki.item("process-step", { text: "Process Next Page.", href: "/nextslug" }),
 
-  "See [[Queue Stats]], [[Failed Sites]]"
+  "See also [[Queue Stats]], [[Failed Sites]]"
 
 ])
 
