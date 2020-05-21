@@ -83,19 +83,15 @@ export class ProcessStep {
       waiting: !!this.waiting,
       status: this.status
     });
+
+    return true
   }
 
-  control(metaPages) {
-
-    function route(url, fn) {
-      metaPages[url] = fn;
-    }
-
-    route(`/${this.name}?action=start`, (a,b) => this.button(a,b));
-    route(`/${this.name}?action=stop`, (a,b) => this.button(a,b));
-    route(`/${this.name}?action=step`, (a,b) => this.button(a,b));
-    route(`/${this.name}?action=state`, (a,b) => this.button(a,b));
-
+  register(handler) {
+    handler.route(`/${this.name}\\?action=start`, (req, _system) => this.button(req, _system))
+    handler.route(`/${this.name}\\?action=stop`, (req, _system) => this.button(req, _system))
+    handler.route(`/${this.name}\\?action=step`, (req, _system) => this.button(req, _system))
+    handler.route(`/${this.name}\\?action=state`, (req, _system) => this.button(req, _system))
     return this
   }
 }

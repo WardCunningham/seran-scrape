@@ -9,7 +9,6 @@ import * as region from "./region.ts"
 
 export let plugins = [ "/client/process-step.mjs" ]
 export let handler = region.handler
-export let metaPages = {};
 
 handler.items("Welcome Visitors", [
   "Welcome to this [[Seran Wiki]] Federation outpost.\
@@ -68,7 +67,7 @@ function counters (where) {
   return `${where} at ${c0} ${c1} ${c2}`
 }
 
-let simple = new ProcessStep('simple', false, run1).control(metaPages)
+let simple = new ProcessStep('simple', false, run1).register(handler)
 
 async function run1() {
   for (c0 = 1; c0 < l0; c0++) {
@@ -106,8 +105,8 @@ let skip = 0
 
 const more = () => (siteq.length + slugq.length + doing.length) > 0
 
-let nextsite = new ProcessStep('nextsite', false, siteloop).control(metaPages)
-let nextslug = new ProcessStep('nextslug', false, slugloop).control(metaPages)
+let nextsite = new ProcessStep('nextsite', false, siteloop).register(handler)
+let nextslug = new ProcessStep('nextslug', false, slugloop).register(handler)
 
 if (!await exists('data')) Deno.mkdir('data')
 
