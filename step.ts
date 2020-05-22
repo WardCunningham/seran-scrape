@@ -31,9 +31,7 @@ export class ProcessStep {
     }
   }
 
-
-  async button(req, _system) {
-    let headers = wiki.baseHeaders();
+  async button(action) {
 
     async function sleep(ms) {
       return new Promise(resolve => {
@@ -41,7 +39,7 @@ export class ProcessStep {
       });
     }
 
-    if (req.url.indexOf("start") != -1) {
+    if (action == 'start') {
       console.log('start')
       if (!this.running && !this.waiting) {
         this.running = true
@@ -60,7 +58,7 @@ export class ProcessStep {
       }
     }
 
-    if (req.url.indexOf("step") != -1) {
+    if (action == 'step') {
       console.log('step',this.run)
       if (this.running) {
         this.running = false;
@@ -71,27 +69,33 @@ export class ProcessStep {
       }
     }
 
-    if (req.url.indexOf("stop") != -1) {
+    if (action == 'stop') {
       console.log('stop',this.run)
       if (this.running) {
         this.running = false;
       }
     }
-
-    wiki.serveJson(req, {
-      running: this.running,
-      waiting: !!this.waiting,
-      status: this.status
-    });
-
-    return true
   }
 
   register(handler) {
-    handler.route(`/${this.name}\\?action=start`, (req, _system) => this.button(req, _system))
-    handler.route(`/${this.name}\\?action=stop`, (req, _system) => this.button(req, _system))
-    handler.route(`/${this.name}\\?action=step`, (req, _system) => this.button(req, _system))
-    handler.route(`/${this.name}\\?action=state`, (req, _system) => this.button(req, _system))
+
+    function route (verb) {
+      handler.route(`/${this.name}\\?action=${verb}`, req => {
+        this.button(verb)
+        wiki.serveJson(req, {
+          running: this.running,
+          waiting: !!this.waiting,
+          status: this.status
+        })
+        return true
+      })
+    }
+
+    route.call(this,'start')
+    route.call(this,'stop')
+    route.call(this,'step')
+    route.call(this,'state')
+
     return this
   }
 }

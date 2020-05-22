@@ -44,7 +44,10 @@ handler.items("Mock Computation", [
 handler.items("Start or Stop the Scrape", [
   "An inital scrape can take the better part of a day.\
   Press 'start' to begin.\
-  Shift-'start' to do one site or slug at a time.",
+  Shift-'start' to do one cycle at a time.",
+
+  "We start scrapes hourly skipping hours if they run long.",
+  wiki.item("process-step", { text: "Run More Scrapes", href: "/nexttime" }),
 
   "We fetch sitemaps for one site and then discover more.",
   wiki.item("process-step", { text: "Process Next Site.", href: "/nextsite" }),
@@ -52,8 +55,8 @@ handler.items("Start or Stop the Scrape", [
   "We fetch page json to index and inspect for more sites.",
   wiki.item("process-step", { text: "Process Next Page.", href: "/nextslug" }),
 
-  "See also [[Queue Stats]], [[Failed Sites]]"
-
+  "See [[Queue Stats]] while running.",
+  "See also [[Active Sites]], [[Failed Sites]]"
 ])
 
 
@@ -100,19 +103,26 @@ let slugq: todo[] = [];
 let doing: site[] = [];
 let done: site[] = [];
 let fail: site[] = []
+let active: site[] = []
+let first: site[] = []
 
+let visit = 0
 let skip = 0
 
 const more = () => (siteq.length + slugq.length + doing.length) > 0
 
 let nextsite = new ProcessStep('nextsite', false, siteloop).register(handler)
 let nextslug = new ProcessStep('nextslug', false, slugloop).register(handler)
+let nexttime = new ProcessStep('nexttime', false, timeloop).register(handler)
 
 if (!await exists('data')) Deno.mkdir('data')
 
 async function preload(root:site) {
   done = []
   fail = []
+  active = []
+  first = []
+  visit = 0
   skip = 0
 
   let files = await Deno.readdir('data')
@@ -127,6 +137,28 @@ async function sleep(ms) {
   return new Promise(resolve => {
     setTimeout(resolve, ms);
   });
+}
+
+
+// E A C H   T I M E
+
+async function timeloop() {
+  const hour = (epoch) => (epoch-(epoch%3600000))+3600000
+  let when = hour(Date.now())
+  while(true) {
+    await sleep(60000)
+    if(more()) {
+      when = hour(Date.now())
+    }
+    if (Date.now() < when) {
+      await nexttime.step(`ready to run at ${(new Date(when)).toLocaleTimeString()}`)
+    } else {
+      await nexttime.step(`ready to run now`)
+      nextsite.button('start')
+      await sleep(5000)
+      nextslug.button('start')
+    }
+  }
 }
 
 
@@ -162,6 +194,7 @@ async function dosite(site: site) {
     if (sitemap.length == 0) throw "empty sitemap";
     if (!(await exists(dir))) {
       await Deno.mkdir(dir); // new site
+      first.push(site)
     }
     for (let info of sitemap) {
       await update(info.slug, info.date||birth);
@@ -189,7 +222,9 @@ async function dosite(site: site) {
       }
     } 
     if (doit) {
+      if (!active.includes(site) && !first.includes(site)) active.push(site)
       slugq.push({ site, slug, date })
+      visit++
       await sleep(500)
     }
      else {
@@ -258,12 +293,21 @@ handler.items("Queue Stats", () => [
   "This work has been completed.",
   `${done.length} sites done`,
   `${fail.length} sites failed`,
+  `${visit} pages visited`,
   `${skip} pages skipped`
 ])
 
 handler.items("Failed Sites", () => [
   "Sites that have failed to return a valid sitemap.json.",
-  fail.join(", ")
+  wiki.item("roster", {text: fail.join("\n")})
+])
+
+handler.items("Active Sites", () => [
+  "Sites active since last scrape.",
+  wiki.item("roster", {text: active.join("\n")}),
+
+  "Sites that are new to this scraper.",
+  wiki.item("roster", {text: first.join("\n")})
 ])
 
 
