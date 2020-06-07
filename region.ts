@@ -40,23 +40,27 @@ handler.items("Three Degrees", async () => [
 handler.items("Configuration", async (req,sys) => [
   "We currently only support a fixed configuration compiled into the server.",
   `Root site for rosters: ${rootSite}`,
-  `Number of scraped sites: ${(await readDir('data')).length}`,
+  `Number of scraped sites: ${(await readDirz('data')).length}`,
    "See [[Sites]] for the full list."
 ])
 
 handler.items("Sites", async () => [
   "This is the full list of sites for which we have references recorded.\
   See [[Federation Scraper]] to enlarge this list.",
-  ...(await readDir('data')).map(i=>i.name)
+  ...(await readDirz('data')).map(i=>i.name)
  ])
 
-async function readDir(path) {
+async function readDirz(path) {
+  let result = []
   let fileInfo = await Deno.stat(path);
-  if (!fileInfo.isDirectory()) {
+  if (!fileInfo.isDirectory) {
     console.log(`path ${path} is not a directory.`);
     return [];
   }
-  return Deno.readdir(path);
+  for await (let f of Deno.readDir(path)) {
+    result.push(f.name)
+  }
+  return result
 }
 
 async function referencedSites(siteName) {
@@ -66,7 +70,7 @@ async function referencedSites(siteName) {
     console.log(`WARN: Site ${siteDir} doesn't exist`);
     return sites;
   }
-  let files = await readDir(siteDir);
+  let files = await readDirz(siteDir);
   for (let file of files) {
     let filename = `${siteDir}/${file.name}`;
     if (!await exists(filename)) {

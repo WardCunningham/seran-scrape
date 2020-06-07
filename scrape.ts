@@ -1,7 +1,7 @@
 // denowiki meta-site federation web scraper
 // usage: sh seran-wiki.sh --allow-disclosure ../seran-scrape/scrape.ts
 
-import { delay } from "std/util/async.ts";
+import { delay } from "std/async/delay.ts";
 import { ProcessStep } from "./step.ts";
 import { exists } from "std/fs/mod.ts"
 import * as wiki from "seran/wiki.ts"
@@ -125,10 +125,13 @@ async function preload(root:site) {
   visit = 0
   skip = 0
 
-  let files = await Deno.readdir('data')
-  if (files.length > 0) {
-    scrape(files.map(i=>i.name))
-  } else {
+  let files = Deno.readDir('data')
+  let some = false
+  for await (let each of files) {
+    some = true
+    scrape([each.name])
+  }
+  if (!some) {
     scrape([root])
   }
 }
@@ -217,7 +220,7 @@ async function dosite(site: site) {
     } else {
       let stat = await Deno.stat(file);
       let epoch = Math.floor(date/1000)
-      if (epoch > stat.modified) {
+      if (epoch > stat.mtime.getTime()) {
         doit = true
       }
     } 
