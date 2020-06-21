@@ -145,6 +145,11 @@ async function sleep(ms) {
   });
 }
 
+function bejson (res) {
+  if (!res.ok) throw Error(res.statusText)
+  return res.json()
+}
+
 
 // E A C H   T I M E
 
@@ -196,7 +201,7 @@ async function dosite(site: site) {
   let url = `http://${site}/system/sitemap.json`;
   let dir = `data/${site}`
   try {
-    let sitemap = await fetch(url).then(res => res.json());
+    let sitemap = await fetch(url).then(bejson);
     if (sitemap.length == 0) throw "empty sitemap";
     if (!(await exists(dir))) {
       await Deno.mkdir(dir); // new site
@@ -258,7 +263,7 @@ async function slugloop() {
 async function doslug(site: site, slug: slug, date: number) {
   let url = `http://${site}/${slug}.json`;
   try {
-    let page = await fetch(url).then(res => res.json());
+    let page = await fetch(url).then(bejson);
     let sites: site[] = [];
     for (let item of page.story || []) {
       if (item.site && !sites.includes(item.site)) {
