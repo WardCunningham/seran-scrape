@@ -56,7 +56,7 @@ handler.items("Start or Stop the Scrape", [
   wiki.item("process-step", { text: "Process Next Page.", href: "/nextslug" }),
 
   "See [[Queue Stats]] while running.",
-  "See also [[Active Sites]], [[Failed Sites]]"
+  "See also [[Active Sites]], [[Failed Sites]], [[Crazy Business]]"
 ])
 
 
@@ -105,6 +105,7 @@ let done: site[] = [];
 let fail: site[] = []
 let active: site[] = []
 let first: site[] = []
+let crazy: any[] = []
 
 let visit = 0
 let skip = 0
@@ -122,6 +123,7 @@ async function preload(root:site) {
   fail = []
   active = []
   first = []
+  crazy = []
   visit = 0
   skip = 0
 
@@ -134,6 +136,7 @@ async function preload(root:site) {
   if (!some) {
     scrape([root])
   }
+  crazy.push(`Preloading ${siteq.length} sites.`)
 }
 
 async function sleep(ms) {
@@ -205,6 +208,7 @@ async function dosite(site: site) {
   } catch (e) {
     if (!fail.includes(site)) { // shouldn't happen, but does
       fail.push(site)
+      crazy.push(`Site trouble, ${e.message}. [http://${site} site]`)
       console.log("site trouble", site, e)
     }
   }
@@ -269,6 +273,7 @@ async function doslug(site: site, slug: slug, date: number) {
     await save(sites);
     scrape(sites);
   } catch (e) {
+    crazy.push(`Slug trouble, ${e.message}. [http://${site}/${slug}.html page]`)
     console.log("slug trouble", site, slug, e);
   }
 
@@ -302,16 +307,19 @@ handler.items("Queue Stats", () => [
 
 handler.items("Failed Sites", () => [
   "Sites that have failed to return a valid sitemap.json.",
-  wiki.item("roster", {text: fail.join("\n")})
+  ...fail
 ])
 
 handler.items("Active Sites", () => [
   "Sites active since last scrape.",
   wiki.item("roster", {text: active.join("\n")}),
-
+  ...active,
   "Sites that are new to this scraper.",
-  wiki.item("roster", {text: first.join("\n")})
+  wiki.item("roster", {text: first.join("\n")}),
+  ...first
 ])
+
+handler.items("Crazy Business", () => crazy)
 
 
 // R E G I O N.   R O S T E R S
