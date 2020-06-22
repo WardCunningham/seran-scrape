@@ -106,6 +106,7 @@ let fail: site[] = []
 let active: site[] = []
 let first: site[] = []
 let crazy: any[] = []
+let troubles: any = {}
 
 let visit = 0
 let skip = 0
@@ -124,6 +125,7 @@ async function preload(root:site) {
   active = []
   first = []
   crazy = []
+  troubles = {}
   visit = 0
   skip = 0
 
@@ -146,8 +148,14 @@ async function sleep(ms) {
 }
 
 function bejson (res) {
-  if (!res.ok) throw Error(res.statusText)
+  if (!res.ok) throw Error(`${res.status} ${res.statusText}`)
   return res.json()
+}
+
+function trouble (msg:string, link:string) {
+  let m = msg.replace(/ for url \(.*?\)/,'')
+  let t = troubles[m] = troubles[m] || []
+  t.push(link)
 }
 
 
@@ -213,8 +221,7 @@ async function dosite(site: site) {
   } catch (e) {
     if (!fail.includes(site)) { // shouldn't happen, but does
       fail.push(site)
-      crazy.push(`Site trouble, ${e.message}. [http://${site} site]`)
-      console.log("site trouble", site, e)
+      trouble(`Site trouble, ${e.message}.`, ` [http://${site} site]`)
     }
   }
   done.push(site);
@@ -278,7 +285,8 @@ async function doslug(site: site, slug: slug, date: number) {
     await save(sites);
     scrape(sites);
   } catch (e) {
-    crazy.push(`Slug trouble, ${e.message}. [http://${site}/${slug}.html page]`)
+    trouble(`Slug trouble, ${e.message}.`,` [http://${site}/${slug}.html page]`)
+    crazy.push()
     console.log("slug trouble", site, slug, e);
   }
 
@@ -324,7 +332,10 @@ handler.items("Active Sites", () => [
   ...first
 ])
 
-handler.items("Crazy Business", () => crazy)
+handler.items("Crazy Business", () => {
+  let msgs = Object.keys(troubles).sort()
+  return [...crazy, ...msgs.map(m => m + troubles[m].join(', '))]
+})
 
 
 // R E G I O N.   R O S T E R S
