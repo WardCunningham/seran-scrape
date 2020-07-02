@@ -117,7 +117,7 @@ let nextsite = new ProcessStep('nextsite', false, siteloop).register(handler)
 let nextslug = new ProcessStep('nextslug', false, slugloop).register(handler)
 let nexttime = new ProcessStep('nexttime', false, timeloop).register(handler)
 
-if (!await exists('data')) Deno.mkdir('data')
+if (!await exists('data')) await Deno.mkdir('data')
 
 async function preload(root:site) {
   done = []
@@ -201,7 +201,7 @@ async function siteloop() {
       await nextsite.step(`#${count++} ${job.site}`)
       await dosite(job.site);
     }
-    await sleep(500)
+    await sleep(100)
   }
 }
 
@@ -244,7 +244,7 @@ async function dosite(site: site) {
       if (!active.includes(site) && !first.includes(site)) active.push(site)
       slugq.push({ site, slug, date })
       visit++
-      await sleep(500)
+      await sleep(100)
     }
      else {
       skip++
@@ -263,7 +263,7 @@ async function slugloop() {
       await nextslug.step(`#${count++} ${job.slug}`)
       await doslug(job.site, job.slug, job.date);
     }
-    await sleep(500)
+    await sleep(100)
   }
 }
 
@@ -286,8 +286,6 @@ async function doslug(site: site, slug: slug, date: number) {
     scrape(sites);
   } catch (e) {
     trouble(`Slug trouble, ${e.message}.`,` [http://${site}/${slug}.html page]`)
-    crazy.push()
-    console.log("slug trouble", site, slug, e);
   }
 
   async function save(sites: site[]) {
